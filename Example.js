@@ -13,6 +13,7 @@ import React, {
   TouchableHighlight,
   ScrollView,
   ToastAndroid,
+  BackAndroid
 } from 'react-native';
 
 import NotifNavbar from './Navbar';
@@ -36,6 +37,16 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 5,
   },
+});
+
+let _navigator;
+
+BackAndroid.addEventListener('hardwareBackPress', () => {
+  if (_navigator.getCurrentRoutes().length === 1  ) {
+    return false;
+  }
+  _navigator.pop();
+  return true;
 });
 
 class Home extends Component {
@@ -92,6 +103,7 @@ export default class extends Component {
   }
 
   renderScene(route, navigator) {
+    _navigator = navigator;
     switch (route.name) {
       case 'notification':
         return <NotifBrowse navigator={navigator} />
