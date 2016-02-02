@@ -16,9 +16,8 @@ import React, {
   BackAndroid
 } from 'react-native';
 
-import NotifNavbar from './Navbar';
-import NotifBrowse from './Browse';
-import NotifView from './View';
+import Navbar from './Navbar';
+import Notification from '../Notification';
 
 const styles = StyleSheet.create({
   container: {
@@ -57,7 +56,7 @@ class Home extends Component {
   render() {
     return (
       <ScrollView>
-        <NotifNavbar title={'Example'} navigator={this.props.navigator} />
+        <Navbar title={'Example'} navigator={this.props.navigator} />
         <View>
           <Text style={styles.welcome}>
             Welcome to React Native!
@@ -71,17 +70,6 @@ class Home extends Component {
         </View>
       </ScrollView>
     );
-  }
-
-  onActionSelected(position) {
-    if (actions[position].route) {
-      return this.gotoRoute(actions[position].route);
-    }
-    return ToastAndroid.show(actions[position].title, ToastAndroid.SHORT);
-  }
-
-  gotoRoute(name) {
-    return this.props.navigator.push({name: name});
   }
 }
 
@@ -106,10 +94,7 @@ export default class extends Component {
     _navigator = navigator;
     switch (route.name) {
       case 'notification':
-        return <NotifBrowse navigator={navigator} />
-        break;
-      case 'view':
-        return <NotifView navigator={navigator} data={route.data} />
+        return <Notification />
         break;
       default:
         return <Home navigator={navigator} />

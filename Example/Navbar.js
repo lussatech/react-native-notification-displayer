@@ -4,12 +4,48 @@ import React, {
   Component,
   View,
   ToastAndroid,
-  AsyncStorage
+  StyleSheet
 } from 'react-native';
 
 import ToolbarAndroid from 'ToolbarAndroid';
-import {key} from './Server';
-import style from './Style';
+
+const style = StyleSheet.create({
+  title: {
+    alignSelf: 'center',
+    fontSize: 30,
+    padding: 8
+  },
+  button: {
+    backgroundColor: '#EC7E48',
+    padding: 15,
+    marginTop: 20,
+    justifyContent: 'center',
+    alignSelf: 'stretch'
+  },
+  buttonText: {
+    fontSize: 15,
+    color: 'white',
+    alignSelf: 'center'
+  },
+  container: {
+    flex: 1,
+    alignItems: 'stretch',
+  },
+  welcome: {
+    fontSize: 20,
+    textAlign: 'center',
+    margin: 10,
+  },
+  instructions: {
+    textAlign: 'center',
+    color: '#333333',
+    marginBottom: 5,
+  },
+  toolbar: {
+    height: 60,
+    backgroundColor: '#D6D2D2'
+  }
+});
 
 const icons = {
   back: require('./ic_menu_back.png'),
@@ -30,13 +66,10 @@ export default class extends Component {
           icons: this.props.icons || icons,
         actions: this.props.actions || actions,
           title: this.props.title,
-        session: this.props.session
     };
   }
 
   render() {
-    this.renderMenu();
-
     return (
       <View style={style.container}>
         <ToolbarAndroid
@@ -53,37 +86,9 @@ export default class extends Component {
     );
   }
 
-  renderMenu() {
-    let temp = [];
-
-    this.state.actions.map((val, key) => {
-      if (!val.auth) {
-        temp.push(val);
-      }
-    });
-
-    if (this.state.actions.length > temp.length) {
-      AsyncStorage.getItem(key)
-        .then((value) => {
-          if (value !== null) {
-            this.state.session = value;
-          } else {
-            this.state.actions = temp;
-          }
-        })
-        .catch((error) => {
-          ToastAndroid.show(String(error).replace('Error: ',''), ToastAndroid.SHORT);
-        })
-        .done();
-    }
-  }
-
   onActionSelected(position) {
     if (this.state.actions[position].route) {
       return this.gotoRoute(this.state.actions[position].route);
-    }
-    if (this.state.actions[position].title === 'Logout') {
-      return this.onLogout();
     }
     return ToastAndroid.show(this.state.actions[position].title, ToastAndroid.SHORT);
   }
@@ -97,18 +102,6 @@ export default class extends Component {
   gotoRoute(name) {
     if (this.state.navigator && this.state.navigator.getCurrentRoutes()[this.state.navigator.getCurrentRoutes().length-1].name != name) {
       this.state.navigator.push({name: name});
-    }
-  }
-
-  async onLogout() {
-    try {
-      await AsyncStorage.removeItem(key);
-      ToastAndroid.show('Logout successfully!', ToastAndroid.SHORT);
-      this.props.navigator.replace({
-        name: 'login'
-      });
-    } catch (error) {
-      ToastAndroid.show(String(error).replace('Error: ',''), ToastAndroid.SHORT);
     }
   }
 }
