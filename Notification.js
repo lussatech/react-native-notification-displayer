@@ -10,56 +10,12 @@ import React, {
   Image,
   StyleSheet,
   Navigator,
-  BackAndroid
+  BackAndroid,
+  ProgressBarAndroid
 } from 'react-native';
 
-import api, {
-  host
-} from './Server';
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-    padding: 5
-  },
-  rightContainer: {
-    flex: 1,
-    margin: 8
-  },
-  name: {
-    fontSize: 20,
-    marginBottom: 0,
-    textAlign: 'left'
-  },
-  clinic: {
-    fontSize: 12,
-    textAlign: 'left'
-  },
-  desc: {
-    fontSize: 14,
-    textAlign: 'left'
-  },
-  thumbnail: {
-    width: 100,
-    height: 100,
-  },
-  listView: {
-    backgroundColor: '#F5FCFF'
-  },
-  title: {
-    flex: 1,
-    justifyContent: 'center'
-  },
-  titleText: {
-    color: 'white',
-    margin: 10,
-    fontSize: 16
-  }
-});
+import api, {host} from './Server';
+import Navbar from './Navbar';
 
 class Display extends Component {
   constructor(props) {
@@ -81,15 +37,15 @@ class Display extends Component {
       .then((responseData) => {
         this.setState({
           nope: responseData ? false : true,
-          load: true,
           data: responseData
         });
       })
       .catch((error) => {
-        console.log(error);
-        ToastAndroid.show(String(error).replace('Error: ',''), ToastAndroid.LONG);
+        this.onError(error);
       })
-      .done();
+      .done(() => {
+        this.setState({load: !this.state.load});
+      });
   }
 
   render() {
@@ -108,19 +64,20 @@ class Display extends Component {
   }
 
   renderLoading() {
-    return (
-      <View style={styles.container}>
-        <Text>fetching data...</Text>
-      </View>
-    );
+    return <ProgressBarAndroid />;
   }
 
   renderEmpty() {
     return (
       <View style={styles.container}>
-        <Text>no result found</Text>
+        <Text>{`no result found`}</Text>
       </View>
     );
+  }
+
+  onError(argument) {
+    console.log(argument);
+    ToastAndroid.show(String(argument).replace('Error: ',''), ToastAndroid.LONG);
   }
 }
 
@@ -146,15 +103,15 @@ class Browse extends Component {
       .then((responseData) => {
         this.setState({
           nope: responseData.length > 0 ? false : true,
-          load: true,
           data: this.state.data.cloneWithRows(responseData)
         });
       })
       .catch((error) => {
-        console.log(error);
-        ToastAndroid.show(String(error).replace('Error: ',''), ToastAndroid.LONG);
+        this.onError(error);
       })
-      .done();
+      .done(() => {
+        this.setState({load: !this.state.load});
+      });
   }
 
   render() {
@@ -177,13 +134,16 @@ class Browse extends Component {
 
   renderRow(data) {
     return (
-      <TouchableHighlight onPress={() => this.props.navigator.push({name: 'view', data: data})}>
+      <TouchableHighlight
+        underlayColor={'#D9D9D9'}
+        onPress={() => this.props.navigator.push({name: 'view', data: data})}>
         <View style={styles.container}>
           <Image
             style={styles.thumbnail}
-            source={{uri: host + '/images/doctors/' + data.picture}}
+            source={{uri: `${host}/images/doctors/${data.picture}`}}
           />
           <View style={styles.rightContainer}>
+            <Text style={styles.date}>{(new Date(data.createdAt)).toISOString().slice(0, 10)}</Text>
             <Text style={styles.name}>{data.name} {data.title}</Text>
             <Text style={styles.clinic}>{data.clinic.name}</Text>
             <Text style={styles.desc}>{data.desc}</Text>
@@ -194,19 +154,20 @@ class Browse extends Component {
   }
 
   renderLoading() {
-    return (
-      <View style={styles.container}>
-        <Text>fetching data...</Text>
-      </View>
-    );
+    return <ProgressBarAndroid />;
   }
 
   renderEmpty() {
     return (
       <View style={styles.container}>
-        <Text>no result found</Text>
+        <Text>{`no result found`}</Text>
       </View>
     );
+  }
+
+  onError(argument) {
+    console.log(argument);
+    ToastAndroid.show(String(argument).replace('Error: ',''), ToastAndroid.LONG);
   }
 }
 
@@ -237,3 +198,48 @@ export default class extends Component {
     }
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderBottomColor: '#FFFFFF',
+    borderBottomWidth: 1,
+  },
+  rightContainer: {
+    flex: 1,
+    margin: 8,
+    marginTop: 0
+  },
+  name: {
+    fontSize: 20,
+  },
+  clinic: {
+    fontSize: 12,
+  },
+  desc: {
+    fontSize: 14,
+  },
+  date: {
+    color: '#ABABAB',
+    alignSelf: 'flex-end',
+    marginTop: 2
+  },
+  thumbnail: {
+    width: 100,
+    height: 100
+  },
+  listView: {
+    backgroundColor: 'transparent'
+  },
+  title: {
+    flex: 1,
+    justifyContent: 'center'
+  },
+  titleText: {
+    color: 'white',
+    margin: 10,
+    fontSize: 16
+  }
+});
