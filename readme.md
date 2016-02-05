@@ -1,59 +1,61 @@
-## Requirements:
+### Installation
+    npm i react-native-notification-displayer
 
-    lussatech-cli
+### Generate Files
+Before generate library files to your react-native-project, make sure that `lussatech-cli` is installed globally in your machine, otherwise use this command to install it:
 
------
-## Content:
-* [Step 1: Get the code](#step1)
-* [Step 2: Generate files](#step2)
-* [Step 3: Customize files](#step3)
+    npm i lussatech-cli -g
 
------
-<a name="step1"></a>
-### Step 1: Get the code
-
-    npm install react-native-notification-displayer
-
------
-<a name="step2"></a>
-### Step 2: Generate files
+If `lussatech-cli` have been installed, change directory to your react-native-project and run this command:
 
     lussatech generate react-native-notification-displayer
 
------
-<a name="step3"></a>
-### Step 3: Customize files
+then the library files will be added automatically inside your react-native-project, e.g.
 
     react-native-project
-    ...
+    |_ ...
     |_ lib
       |_ react-native-notification-displayer
-        |_ Example
         |_ ...
-        |_ Notification.js
+        |_ index.js
         |_ ...
-        |_ Server.js
-    ...
 
-#### Setting up your API end-point at `Server.js`, e.g.
+### Usage
+```javascript
+...
+import Notification, {  // sample app
+/* available components */
+  Navbar,               // sample navigation bar
+  Notification,               // sample client view
+/* available constants  */  
+  Server,               // sample api end-point
+  Host,                 // sample host for api end-point
+} from './lib/react-native-notification-displayer';
+
+class Name extends Component {
+  render() {
+    return (
+      <APIClient />     // sample calling component
+    );
+  }
+}
+...
+```
+
+###### Manage API end-point
+To manage api end-point, update `Server.js` based on your api end-point, e.g.
+
 ```javascript
 # lib/react-native-notification-displayer/Server.js
 
-export const host = 'http://example.com';
+...
+export const host = 'http://example.com'; // host for api url
 export default {
   notification: {
-    browse: function () {
-      let url = host + '/notification',    // API URI for browse notifications
-          opt = {
-            method: 'get'
-          };
-
-      return fetch(url, opt);
-    },
-    view: function (id) {                  // API URI for view notification based on id
-      let url = host + '/notification/' + id,
-          opt = {
-            method: 'get'
+    find: function () {
+      let url = `${host}/notification`,   // api url for browse notification
+          opt = {                         // optional second argument
+            method: 'get'                 //  to customize the HTTP request
           };
 
       return fetch(url, opt);
@@ -62,89 +64,137 @@ export default {
   },
   ...
 };
+...
 ```
 
-#### Call your API URI for browse and view notification at `Notification.js`, e.g.
+then call api end-point inside your react-native-project, e.g.
+
 ```javascript
 # lib/react-native-notification-displayer/Notification.js
 
-...
-import api, {host} from './Server';
-
-class Display extends Component {
   ...
   componentDidMount() {
-    api.notification.view(id)              // call API URI for view notification based on id
+    api.notification.find()             // call api url for browse notification
       .then((response) => {
         ...
       })
       .catch((error) => {
         ...
       })
-      .done();
+      .done(() => {
+        ...
+      });
+  }
+  ...
+```
+
+###### Customize navigation bar
+To customize navigation bar, update `Navbar.js` based on your need, e.g.
+
+```javascript
+# lib/react-native-notification-displayer/Navbar.js
+
+...
+export default class extends Component {
+  /* to validate props value */
+  static propTypes = {
+    onRefresh: PropTypes.func,
+    ...
+  };
+  ...
+
+  /* when a menu is selected */
+  onActionSelected(position) {
+    switch (position) {
+       case 0: this.onSearch(); break;
+       case 1: this.onRefresh(); break;
+       ...
+      default: ToastAndroid.show(`${actions[position].title} selected.`, ToastAndroid.SHORT);
+    }
+  }
+  ...
+
+  /* when selected menu is `Refresh` */
+  onRefresh() {
+    /* calling onRefresh props action if available */
+    this.props.onRefresh && this.props.onRefresh();
   }
   ...
 }
 
-class Browse extends Component {
+/* list of menu */
+const actions = [
+  {title: 'Search', icon: icons.search, show: 'always'},
+  {title: 'Refresh', icon: icons.refresh, show: 'ifRoom'},
+  {title: 'Notification'},
   ...
-  componentDidMount() {
-    api.notification.browse()              // call API URI for browse notifications
-      .then((response) => {
-        ...
-      })
-      .catch((error) => {
-        ...
-      })
-      .done();
-  }
+];
+...
+```
+
+then include the navigation bar inside your react-native-project, e.g.
+
+```javascript
+# lib/react-native-notification-displayer/index.js
+
   ...
-  renderRow(data) {                       // display response row data
+  render() {
     return (
-      <TouchableHighlight
-        onPress={() => this.props.navigator.push({name: 'view', data: data})}> // goto view notification when touched, passing data as parameter
+      <ScrollView>
+        <Navbar title={`Notification`} onRefresh={() => this.forceUpdate()} />
         <View style={styles.container}>
           ...
-          <Image style={styles.thumbnail} source={{uri: host + '/images/' + data.picture}} />
+        </View>
+      </ScrollView>
+    );
+  }
+  ...
+```
+
+###### Customize views
+To customize views, update `Notification.js` based on your need, e.g.
+
+```javascript
+# lib/react-native-notification-displayer/Notification.js
+
+  ...
+  render() {
+    if (!this.state.load) return this.renderLoading();
+    if (this.state.nope) return this.renderEmpty();
+
+    return this.renderScene();
+  }
+
+  renderScene() {
+    return (
+      <ListView
+        style={styles.listView}
+        dataSource={this.state.data}
+        renderRow={this.renderRow.bind(this)}
+        automaticallyAdjustContentInsets={false}
+      />
+    );
+  }
+
+  renderRow(data) {
+    return (
+      <TouchableHighlight
+        underlayColor={'#D9D9D9'}
+        onPress={() => this.props.navigator.push({name: 'view', data: data})}>
+        <View style={styles.container}>
+          <Image
+            style={styles.thumbnail}
+            source={{uri: `${host}/images/doctors/${data.picture}`}}
+          />
           <View style={styles.rightContainer}>
-            <Text style={styles.name}>{data.name}</Text>    // display value of data
+            <Text style={styles.date}>{(new Date(data.createdAt)).toISOString().slice(0, 10)}</Text>
+            <Text style={styles.name}>{data.name} {data.title}</Text>
+            <Text style={styles.clinic}>{data.clinic.name}</Text>
+            <Text style={styles.desc}>{data.desc}</Text>
           </View>
-          ...
         </View>
       </TouchableHighlight>
     );
   }
   ...
-}
-...
-```
-
-#### Import `Notification.js` to your _react-native-project_, e.g.
-```javascript
-# index.android.js
-
-...
-import Notification from './lib/react-native-notification-displayer/Notification';
-
-class Name extends Component {
-  render() {
-    return <Notification />;
-  }
-}
-...
-```
-
-#### Or import `Example` to your _react-native-project_ to see an example, e.g.
-```javascript
-# index.android.js
-
-...
-import Example from './lib/react-native-notification-displayer/Example';
-
-class Name extends Component {
-  render() {
-    return <Example />;
-  }
-}
-...
 ```
