@@ -1,3 +1,5 @@
+![react-native-notification-displayer](https://raw.githubusercontent.com/lussatech/react-native-notification-displayer/master/preview.gif)
+
 ### Installation
     npm i react-native-notification-displayer
 
