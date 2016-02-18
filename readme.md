@@ -25,19 +25,22 @@ then the library files will be added automatically inside your react-native-proj
 ### Usage
 ```javascript
 ...
-import Notification, {  // sample app
+import Notifications, {  // sample app
 /* available components */
-  Navbar,               // sample navigation bar
-  Notification,               // sample client view
+  Browse,               // sample browse notification view
+  Display,              // sample display one notification view
+  Home,                 // sample home view
+  Notification,         // sample notification scenario view
 /* available constants  */  
-  Server,               // sample api end-point
   Host,                 // sample host for api end-point
+  Server,               // sample api end-point
+  Style                 // sample style
 } from './lib/react-native-notification-displayer';
 
 class Name extends Component {
   render() {
     return (
-      <APIClient />     // sample calling component
+      <Notifications />  // sample calling component
     );
   }
 }
@@ -91,73 +94,99 @@ then call api end-point inside your react-native-project, e.g.
 ```
 
 ###### Customize navigation bar
-To customize navigation bar, update `Navbar.js` based on your need, e.g.
-
-```javascript
-# lib/react-native-notification-displayer/Navbar.js
-
-...
-export default class extends Component {
-  /* to validate props value */
-  static propTypes = {
-    onRefresh: PropTypes.func,
-    ...
-  };
-  ...
-
-  /* when a menu is selected */
-  onActionSelected(position) {
-    switch (position) {
-       case 0: this.onSearch(); break;
-       case 1: this.onRefresh(); break;
-       ...
-      default: ToastAndroid.show(`${actions[position].title} selected.`, ToastAndroid.SHORT);
-    }
-  }
-  ...
-
-  /* when selected menu is `Refresh` */
-  onRefresh() {
-    /* calling onRefresh props action if available */
-    this.props.onRefresh && this.props.onRefresh();
-  }
-  ...
-}
-
-/* list of menu */
-const actions = [
-  {title: 'Search', icon: icons.search, show: 'always'},
-  {title: 'Refresh', icon: icons.refresh, show: 'ifRoom'},
-  {title: 'Notification'},
-  ...
-];
-...
-```
-
-then include the navigation bar inside your react-native-project, e.g.
-
-```javascript
-# lib/react-native-notification-displayer/index.js
-
-  ...
-  render() {
-    return (
-      <ScrollView>
-        <Navbar title={`Notification`} onRefresh={() => this.forceUpdate()} />
-        <View style={styles.container}>
-          ...
-        </View>
-      </ScrollView>
-    );
-  }
-  ...
-```
-
-###### Customize views
-To customize views, update `Notification.js` based on your need, e.g.
+To customize navigation bar, update `Notification.js` based on your need, e.g.
 
 ```javascript
 # lib/react-native-notification-displayer/Notification.js
+
+...
+  render() {
+    return (
+      <Navigator
+        initialRoute={{
+          component: Home,
+              title: `Home`
+        }}
+        navigationBar={
+          <Navigator.NavigationBar
+            style={{backgroundColor:'teal'}}
+            routeMapper={{
+              /* left side of navigation bar */
+              LeftButton: (route, navigator, index, navState) => {
+                return (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={{...}}
+                    onPress={() => {
+                      navigator.replace({
+                        component: Home,
+                            title: `Home`
+                      });
+                    }}>
+                    <View style={{...}}>
+                      <Image source={require('./icons/ic_menu_white.png')} />
+                    </View>
+                  </TouchableOpacity>
+                )
+              },
+              /* title of currently view on navigation bar */
+              Title: (route, navigator, index, navState) => {
+                return (
+                  <View style={{...}}>
+                    <Text style={{...}}>{route.title}</Text>
+                  </View>
+                )
+              },
+              /* right side of navigation bar */
+              RightButton: (route, navigator, index, navState) => {
+                return (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={{...}}
+                    /* display notifications when clicked */
+                    onPress={() => {
+                      this.setState({data: 0});
+                      navigator.replace({
+                        component: Browse,
+                            title: `Notification`
+                      });
+                    }}>
+                    <View style={{...}}>
+                      <Image source={require('./icons/ic_notifications_white.png')} />
+                      {
+                        this.state.data > 0 ? (
+                          /* add badge on notification icon */
+                          <View style={{...}}>
+                            <Text style={{...}}>{this.state.data}</Text>
+                          </View>
+                        ) : undefined
+                      }
+                    </View>
+                  </TouchableOpacity>
+                )
+              }
+            }}
+          />
+        }
+        sceneStyle={{paddingTop:57}}
+        renderScene={(route, navigator) => {
+          /* render view based on component parameter of route */
+          return <route.component navigator={navigator} passProps={route.passProps} />;
+        }}
+        configureScene={(route) => {
+          return route.sceneConfig ? route.sceneConfig : Navigator.SceneConfigs.HorizontalSwipeJump;
+        }}
+      />
+    );
+  }
+...
+```
+
+###### Customize views
+To customize views, update `Browse.js`, `Display.js`, `Home.js` and `Notification.js` based on your need, e.g.
+
+```javascript
+# lib/react-native-notification-displayer/Browse.js
 
   ...
   render() {
@@ -182,7 +211,14 @@ To customize views, update `Notification.js` based on your need, e.g.
     return (
       <TouchableHighlight
         underlayColor={'#D9D9D9'}
-        onPress={() => this.props.navigator.push({name: 'view', data: data})}>
+        /* display selected notification when clicked */
+        onPress={() => {
+          this.props.navigator.replace({
+            component: Display,
+                title: `Notification`,
+            passProps: data
+          })
+        }}>
         <View style={styles.container}>
           <Image
             style={styles.thumbnail}
@@ -191,8 +227,6 @@ To customize views, update `Notification.js` based on your need, e.g.
           <View style={styles.rightContainer}>
             <Text style={styles.date}>{(new Date(data.createdAt)).toISOString().slice(0, 10)}</Text>
             <Text style={styles.name}>{data.name} {data.title}</Text>
-            <Text style={styles.clinic}>{data.clinic.name}</Text>
-            <Text style={styles.desc}>{data.desc}</Text>
           </View>
         </View>
       </TouchableHighlight>
